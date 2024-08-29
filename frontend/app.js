@@ -2,6 +2,7 @@ let map;
 const markers = {};
 const fetchInterval = 5 * 1000; // 5 seconds
 const showCarsButton = document.getElementById('showCarsBtn');
+const carIconUrl = 'car.png';  // Replace with the actual URL of the car icon
 
 // Initialize Google Map
 function initMap() {
@@ -14,31 +15,36 @@ function initMap() {
   startPolling();
 }
 
-// Clear existing markers
-function clearMarkers() {
-  Object.values(markers).forEach((marker) => marker.setMap(null));
-}
-
-// Add new markers to the map
-function addMarkers(vehicles) {
+// Add or update car markers on the map
+function addOrUpdateMarkers(vehicles) {
   vehicles.forEach((vehicle) => {
     const { id, location } = vehicle;
     const [lat, lng] = location.split(',').map(Number);
 
-    const marker = new google.maps.Marker({
-      position: { lat, lng },
-      map,
-      title: `Vehicle ID: ${id}`,
-    });
+    // Check if the marker already exists
+    if (markers[id]) {
+      // Update the marker's position to simulate movement
+      markers[id].setPosition({ lat, lng });
+    } else {
+      // Create a new marker with the car icon
+      const marker = new google.maps.Marker({
+        position: { lat, lng },
+        map,
+        icon: {
+          url: carIconUrl,
+          scaledSize: new google.maps.Size(50, 50),  // Scale the icon size
+        },
+        title: `Vehicle ID: ${id}`,
+      });
 
-    markers[id] = marker;
+      markers[id] = marker;
+    }
   });
 }
 
 // Update the map with vehicle data
 function updateMap(vehicles) {
-  clearMarkers();
-  addMarkers(vehicles);
+  addOrUpdateMarkers(vehicles);
 }
 
 // Fetch vehicle data periodically
