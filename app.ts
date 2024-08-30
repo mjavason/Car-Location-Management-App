@@ -12,10 +12,12 @@ const app = express();
 dotenv.config({ path: './.env' });
 const PORT = process.env.PORT || 5000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-const vehicles: {
-  [id: string]: { id: string; licensePlate: string; location: string };
-} = {};
-
+let vehicles: {
+  id: string;
+  licensePlate: string;
+  longitude: number;
+  latitude: number;
+}[] = [];
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -26,52 +28,59 @@ setupSwagger(app, BASE_URL);
 //#endregion App Setup
 
 //#region Code here
-// In-memory storage for demo purposes
-// const vehicles: { [id: string]: { id: string; licensePlate: string; location: string } } = {};
-
 // Add or update vehicle location
-app.post('/vehicles/:id/location', (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { location } = req.body; // Expect location as 'latitude,longitude'
-  
-  if (!location) {
-    return res.status(400).json({ message: 'Location is required' });
-  }
+// app.post('/vehicles/:id/location', (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const { longitude, latitude } = req.body; // Expect location as 'latitude,longitude'
 
-  // Update or add vehicle
-  if (!vehicles[id]) {
-    vehicles[id] = { id, licensePlate: 'Unknown', location };
-  } else {
-    vehicles[id].location = location;
-  }
-  
-  res.json(vehicles[id]);
-});
+//   if (!location) {
+//     return res.status(400).json({ message: 'Location is required' });
+//   }
+
+//   // Update or add vehicle
+//   if (!vehicles[id]) {
+//     vehicles[id] = { id, licensePlate: 'Unknown', longitude, latitude };
+//   } else {
+//     vehicles[id].longitude = longitude;
+//     vehicles[id].latitude = latitude;
+//   }
+
+//   res.json(vehicles[id]);
+// });
 
 // Get all vehicles
 app.get('/vehicles', (req: Request, res: Response) => {
-  res.json(Object.values(vehicles));
+  res.json(JSON.stringify(vehicles));
 });
 
 // Add a new vehicle
 app.post('/vehicles', (req: Request, res: Response) => {
-  const { id, licensePlate, location } = req.body;
-  if (!id || !licensePlate || !location) {
+  const { id, licensePlate, longitude, latitude } = req.body;
+  if (!id || !licensePlate || !longitude || !latitude) {
     return res.status(400).json({ message: 'Missing fields' });
   }
-  vehicles[id] = { id, licensePlate, location };
-  res.status(201).json(vehicles[id]);
+  const existingVehicle = vehicles.findIndex((currentValue) => {
+    return currentValue.id === id;
+  });
+
+  if (existingVehicle > -1) {
+    vehicles[existingVehicle] = { id, licensePlate, longitude, latitude };
+  } else {
+    vehicles.push({ id, licensePlate, longitude, latitude });
+  }
+
+  res.status(201).send({ message: 'Successful' });
 });
 
 // Delete a vehicle
-app.delete('/vehicles/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
-  if (!vehicles[id]) {
-    return res.status(404).json({ message: 'Vehicle not found' });
-  }
-  delete vehicles[id];
-  res.json({ message: 'Vehicle deleted' });
-});
+// app.delete('/vehicles/:id', (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   if (!vehicles[id]) {
+//     return res.status(404).json({ message: 'Vehicle not found' });
+//   }
+//   delete vehicles[id];
+//   res.json({ message: 'Vehicle deleted' });
+// });
 
 //#endregion
 
@@ -150,6 +159,23 @@ app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+function currentValue(
+  value: {
+    id: string;
+    licensePlate: string;
+    longitude: number;
+    latitude: number;
+  },
+  index: number,
+  array: {
+    id: string;
+    licensePlate: string;
+    longitude: number;
+    latitude: number;
+  }[]
+): unknown {
+  throw new Error('Function not implemented.');
+}
 // (for render services) Keep the API awake by pinging it periodically
 // setInterval(pingSelf(BASE_URL), 600000);
 
