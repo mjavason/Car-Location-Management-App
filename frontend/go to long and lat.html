@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go to Location</title>
+    <style>
+      #map {
+        height: 400px;
+        width: 100%;
+        margin-top: 20px;
+      }
+      #locationInput {
+        margin-bottom: 10px;
+      }
+    </style>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=API_KEY&callback=initMap"
+      async
+      defer
+    ></script>
+  </head>
+  <body>
+    <h1>Enter Longitude and Latitude to View Location</h1>
+    <div>
+      <input
+        type="text"
+        id="latitude"
+        placeholder="Enter Latitude"
+        style="width: 150px; padding: 8px"
+      />
+      <input
+        type="text"
+        id="longitude"
+        placeholder="Enter Longitude"
+        style="width: 150px; padding: 8px"
+      />
+      <button onclick="goToLocation()">Go to Location</button>
+    </div>
+    <div id="map"></div>
+
+    <script>
+      let map;
+      let marker;
+
+      function initMap() {
+        // Initialize the map with a default center (0, 0)
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 3,
+          center: { lat: 0, lng: 0 },
+        });
+        marker = new google.maps.Marker({
+          map: map,
+        });
+      }
+
+      function goToLocation() {
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lng = parseFloat(document.getElementById('longitude').value);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          alert('Please enter valid latitude and longitude values.');
+          return;
+        }
+
+        const location = { lat: lat, lng: lng };
+
+        // Center the map on the entered coordinates
+        map.setCenter(location);
+        map.setZoom(15); // Optional: Zoom in on the location
+
+        // Move the marker to the new location
+        marker.setPosition(location);
+      }
+    </script>
+  </body>
+</html>

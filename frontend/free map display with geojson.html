@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enugu Regions</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+      #map {
+        width: 100%;
+        height: 600px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+      // Initialize the map
+      var map = L.map('map').setView([6.5, 7.5], 10); // Centered on Enugu region, adjust as needed
+
+      // Add OpenStreetMap tile layer
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // Fetch GeoJSON data from external file
+      fetch('coordinates/enugu-metropolis.json')
+        .then((response) => response.json()) // Parse the JSON file
+        .then((data) => {
+          // Add the GeoJSON data to the map
+          L.geoJSON(data).addTo(map);
+        })
+        .catch((error) => {
+          console.error('Error loading the GeoJSON file:', error);
+        });
+    </script>
+  </body>
+</html>
