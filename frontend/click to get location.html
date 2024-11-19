@@ -1,112 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bounded Google Map with Multiple Polygons</title>
-  <style>
-    #map {
-      height: 100vh; /* Full screen height */
-      width: 100%;   /* Full width */
-    }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY"></script>
-  <script>
-    function initMap() {
-      // First coordinate set (Polygon 1)
-      const coordinates1 = [
-        { lat: 6.375703208583821, lng: 7.500351327783069 },
-        { lat: 6.3772386032703405, lng: 7.509148973672088 },
-        { lat: 6.372461804685496, lng: 7.528761285667252 },
-        { lat: 6.3706704937225425, lng: 7.544811624440483 },
-        { lat: 6.376833430441863, lng: 7.558458706994384 },
-        { lat: 6.387367828431132, lng: 7.565475365705499 },
-        { lat: 6.397390232572254, lng: 7.580774685962369 },
-        { lat: 6.408777151002565, lng: 7.568071743961635 },
-        { lat: 6.42444974100216, lng: 7.5427087755988085 },
-        { lat: 6.427904042888726, lng: 7.53146495546148 },
-        { lat: 6.428820921545793, lng: 7.518740555874525 },
-        { lat: 6.423170363962969, lng: 7.467864415274575 },
-        { lat: 6.423937989798861, lng: 7.451685327705796 },
-        { lat: 6.410888180396031, lng: 7.440119640950642 },
-        { lat: 6.392153698080493, lng: 7.45936771120279 },
-        { lat: 6.384707085047037, lng: 7.464594009431707 },
-        { lat: 6.380335574631322, lng: 7.474652042447125 },
-        { lat: 6.378607291269534, lng: 7.4873159078047 },
-        { lat: 6.375703208583821, lng: 7.500351327783069 }
-      ];
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bounded Google Map with Multiple Polygons</title>
+    <style>
+      #map {
+        height: 100vh; /* Full screen height */
+        width: 100%; /* Full width */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY"></script>
+    <script src="coordinates/data.js"></script>
+    <script>
+      function initMap() {
+        // Initialize the map
+        const map = new google.maps.Map(document.getElementById('map'), {
+          center: { lat: 6.4, lng: 7.5 }, // Approximate center
+          zoom: 13,
+        });
 
-      // Second coordinate set (Polygon 2)
-      const coordinates2 = [
-        { lat: 6.397705790909098, lng: 7.580742002254781 },
-        { lat: 6.421929327167415, lng: 7.618164183792457 },
-        { lat: 6.449222071232258, lng: 7.629493835083679 },
-        { lat: 6.46627929042506, lng: 7.594131590144409 },
-        { lat: 6.46627929042506, lng: 7.568725705430758 },
-        { lat: 6.466364575288646, lng: 7.4944821598329305 },
-        { lat: 6.48563853734289, lng: 7.472423673019398 },
-        { lat: 6.485553255948143, lng: 7.471822858178196 },
-        { lat: 6.484785722756224, lng: 7.461866498642894 },
-        { lat: 6.450927818996591, lng: 7.446760297314837 },
-        { lat: 6.423937989798861, lng: 7.451685327705796 },
-        { lat: 6.423170363962969, lng: 7.467864415274575 },
-        { lat: 6.428820921545793, lng: 7.518740555874525 },
-        { lat: 6.427904042888726, lng: 7.53146495546148 },
-        { lat: 6.42444974100216, lng: 7.5427087755988085 },
-        { lat: 6.408777151002565, lng: 7.568071743961635 },
-        { lat: 6.397390232572254, lng: 7.580774685962369 },
-        { lat: 6.397705790909098, lng: 7.580742002254781 }
-      ];
+        // Create first polygon
+        const polygon1 = new google.maps.Polygon({
+          paths: coordinates1,
+          strokeColor: '#FF0000',
+          strokeOpacity: 0.1,
+          strokeWeight: 2,
+          fillColor: '#FF0000',
+          fillOpacity: 0.5,
+          map: map,
+        });
+
+        // Create second polygon
+        const polygon2 = new google.maps.Polygon({
+          paths: coordinates2,
+          strokeColor: '#0000FF',
+          strokeOpacity: 0.1,
+          strokeWeight: 1,
+          fillColor: '#0000FF',
+          fillOpacity: 0.5,
+          map: map,
+        });
+
+        // Create third polygon
+        const polygon3 = new google.maps.Polygon({
+          paths: coordinates3,
+          strokeColor: '#0000FF',
+          strokeOpacity: 0.1,
+          strokeWeight: 1,
+          fillColor: '#008000',
+          fillOpacity: 0.5,
+          map: map,
+        });
+
+        // Calculate bounds for both polygons
+        const bounds = new google.maps.LatLngBounds();
+        coordinates1
+          .concat(...coordinates2, ...coordinates3)
+          .forEach((coord) => bounds.extend(coord));
+
+        // Restrict map bounds to the polygons
+        map.setOptions({
+          restriction: {
+            latLngBounds: bounds,
+            // strictBounds: true, // Prevents scrolling outside
+          },
+        });
+
+        // Fit the map to the polygons' bounds
+        map.fitBounds(bounds);
+      }
 
       // Initialize the map
-      const map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 6.4, lng: 7.5 }, // Approximate center
-        zoom: 13
-      });
-
-      // Create first polygon
-      const polygon1 = new google.maps.Polygon({
-        paths: coordinates1,
-        strokeColor: "#FF0000",
-        strokeOpacity: 0.1,
-        strokeWeight: 2,
-        fillColor: "#FF0000",
-        fillOpacity: 0.05,
-        map: map
-      });
-
-      // Create second polygon
-      const polygon2 = new google.maps.Polygon({
-        paths: coordinates2,
-        strokeColor: "#0000FF",
-        strokeOpacity: 0.1,
-        strokeWeight: 1,
-        fillColor: "#0000FF",
-        fillOpacity: 0.05,
-        map: map
-      });
-
-      // Calculate bounds for both polygons
-      const bounds = new google.maps.LatLngBounds();
-      coordinates1.concat(coordinates2).forEach(coord => bounds.extend(coord));
-
-      // Restrict map bounds to the polygons
-      map.setOptions({
-        restriction: {
-          latLngBounds: bounds,
-          strictBounds: true // Prevents scrolling outside
-        }
-      });
-
-      // Fit the map to the polygons' bounds
-      map.fitBounds(bounds);
-    }
-
-    // Initialize the map
-    window.onload = initMap;
-  </script>
-</body>
+      window.onload = initMap;
+    </script>
+  </body>
 </html>
