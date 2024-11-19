@@ -9,11 +9,21 @@
         height: 100vh; /* Full screen height */
         width: 100%; /* Full width */
       }
+      #info {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: white;
+        padding: 10px;
+        border: 1px solid #ccc;
+        z-index: 5;
+      }
     </style>
   </head>
   <body>
+    <div id="info"></div>
     <div id="map"></div>
-    <script src="https://maps.googleapis.com/maps/api/js?key=API_KEY"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
     <script src="coordinates/data.js"></script>
     <script>
       function initMap() {
@@ -23,7 +33,7 @@
           zoom: 13,
         });
 
-        // Create first polygon
+        // Create polygons
         const polygon1 = new google.maps.Polygon({
           paths: coordinates1,
           strokeColor: '#FF0000',
@@ -34,7 +44,6 @@
           map: map,
         });
 
-        // Create second polygon
         const polygon2 = new google.maps.Polygon({
           paths: coordinates2,
           strokeColor: '#0000FF',
@@ -45,7 +54,6 @@
           map: map,
         });
 
-        // Create third polygon
         const polygon3 = new google.maps.Polygon({
           paths: coordinates3,
           strokeColor: '#0000FF',
@@ -72,6 +80,91 @@
 
         // Fit the map to the polygons' bounds
         map.fitBounds(bounds);
+
+        // Initialize the Geocoder
+        const geocoder = new google.maps.Geocoder();
+
+        // Set up the click event listener on the map
+        map.addListener('click', function (event) {
+          const clickedLatLng = event.latLng;
+
+          // Check if the clicked location is inside any polygon
+          if (
+            google.maps.geometry.poly.containsLocation(
+              clickedLatLng,
+              polygon1
+            ) ||
+            google.maps.geometry.poly.containsLocation(
+              clickedLatLng,
+              polygon2
+            ) ||
+            google.maps.geometry.poly.containsLocation(clickedLatLng, polygon3)
+          ) {
+            // Get the coordinates of the clicked location
+            const lat = clickedLatLng.lat();
+            const lng = clickedLatLng.lng();
+
+            // Use Geocoder to get the address
+            geocoder.geocode(
+              { location: clickedLatLng },
+              function (results, status) {
+                if (status === google.maps.GeocoderStatus.OK) {
+                  if (results[0]) {
+                    const address = results[0].formatted_address;
+                    document.getElementById('info').innerHTML =
+                      '<b>Coordinates:</b><br>Lat: ' +
+                      lat +
+                      '<br>Lng: ' +
+                      lng +
+                      '<br><b>Address:</b><br>' +
+                      address;
+                  } else {
+                    alert('No address found for this location');
+                  }
+                } else {
+                  alert('Geocoder failed due to: ' + status);
+                }
+              }
+            );
+          } else {
+            document.getElementById('info').innerHTML =
+              'Click within the bounds of the polygons.';
+          }
+        });
+
+        // Enable clicking within the polygons to get the coordinates
+        [polygon1, polygon2, polygon3].forEach((polygon) => {
+          polygon.addListener('click', function (event) {
+            const clickedLatLng = event.latLng;
+
+            // Get the coordinates of the clicked location within the polygon
+            const lat = clickedLatLng.lat();
+            const lng = clickedLatLng.lng();
+
+            // Use Geocoder to get the address
+            geocoder.geocode(
+              { location: clickedLatLng },
+              function (results, status) {
+                if (status === google.maps.GeocoderStatus.OK) {
+                  if (results[0]) {
+                    const address = results[0].formatted_address;
+                    document.getElementById('info').innerHTML =
+                      '<b>Coordinates:</b><br>Lat: ' +
+                      lat +
+                      '<br>Lng: ' +
+                      lng +
+                      '<br><b>Address:</b><br>' +
+                      address;
+                  } else {
+                    alert('No address found for this location');
+                  }
+                } else {
+                  alert('Geocoder failed due to: ' + status);
+                }
+              }
+            );
+          });
+        });
       }
 
       // Initialize the map
