@@ -33,38 +33,44 @@
           zoom: 13,
         });
 
+        // Marker reference
+        let marker = null;
+
         // Create polygons
         const polygon1 = new google.maps.Polygon({
           paths: coordinates1,
           strokeColor: '#FF0000',
-          strokeOpacity: 0.1,
+          strokeOpacity: 0.8,
           strokeWeight: 2,
           fillColor: '#FF0000',
-          fillOpacity: 0.5,
+          fillOpacity: 0.15,
           map: map,
+          clickable: false, // Allow map clicks through the polygon
         });
 
         const polygon2 = new google.maps.Polygon({
           paths: coordinates2,
           strokeColor: '#0000FF',
-          strokeOpacity: 0.1,
-          strokeWeight: 1,
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
           fillColor: '#0000FF',
-          fillOpacity: 0.5,
+          fillOpacity: 0.15,
           map: map,
+          clickable: false, // Allow map clicks through the polygon
         });
 
         const polygon3 = new google.maps.Polygon({
           paths: coordinates3,
-          strokeColor: '#0000FF',
-          strokeOpacity: 0.1,
-          strokeWeight: 1,
+          strokeColor: '#008000',
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
           fillColor: '#008000',
-          fillOpacity: 0.5,
+          fillOpacity: 0.15,
           map: map,
+          clickable: false, // Allow map clicks through the polygon
         });
 
-        // Calculate bounds for both polygons
+        // Calculate bounds for all polygons
         const bounds = new google.maps.LatLngBounds();
         coordinates1
           .concat(...coordinates2, ...coordinates3)
@@ -74,7 +80,8 @@
         map.setOptions({
           restriction: {
             latLngBounds: bounds,
-            // strictBounds: true, // Prevents scrolling outside
+            strictBounds: false,
+            // gestureHandling: 'greedy',
           },
         });
 
@@ -88,8 +95,18 @@
         map.addListener('click', function (event) {
           const clickedLatLng = event.latLng;
 
+          // Place a marker at the clicked location
+          if (marker) {
+            marker.setMap(null);
+          }
+          marker = new google.maps.Marker({
+            position: clickedLatLng,
+            map: map,
+            title: `Lat: ${clickedLatLng.lat()}, Lng: ${clickedLatLng.lng()}`,
+          });
+
           // Check if the clicked location is inside any polygon
-          if (
+          const insidePolygon =
             google.maps.geometry.poly.containsLocation(
               clickedLatLng,
               polygon1
@@ -98,13 +115,10 @@
               clickedLatLng,
               polygon2
             ) ||
-            google.maps.geometry.poly.containsLocation(clickedLatLng, polygon3)
-          ) {
-            // Get the coordinates of the clicked location
-            const lat = clickedLatLng.lat();
-            const lng = clickedLatLng.lng();
+            google.maps.geometry.poly.containsLocation(clickedLatLng, polygon3);
 
-            // Use Geocoder to get the address
+          if (insidePolygon) {
+            // Use Geocoder to get the address if inside a polygon
             geocoder.geocode(
               { location: clickedLatLng },
               function (results, status) {
@@ -113,57 +127,32 @@
                     const address = results[0].formatted_address;
                     document.getElementById('info').innerHTML =
                       '<b>Coordinates:</b><br>Lat: ' +
-                      lat +
+                      clickedLatLng.lat() +
                       '<br>Lng: ' +
-                      lng +
+                      clickedLatLng.lng() +
                       '<br><b>Address:</b><br>' +
                       address;
                   } else {
-                    alert('No address found for this location');
+                    document.getElementById('info').innerHTML =
+                      'No address found for this location.';
                   }
                 } else {
-                  alert('Geocoder failed due to: ' + status);
+                  document.getElementById('info').innerHTML =
+                    'Geocoder failed due to: ' + status;
                 }
               }
             );
           } else {
+            window.alert('Oga where you dey go? ');
+            // Handle clicks outside polygons
             document.getElementById('info').innerHTML =
-              'Click within the bounds of the polygons.';
+              'Selected location out of bounds<br>';
+            //  +
+            // '<b>Coordinates:</b><br>Lat: ' +
+            // clickedLatLng.lat() +
+            // '<br>Lng: ' +
+            // clickedLatLng.lng();
           }
-        });
-
-        // Enable clicking within the polygons to get the coordinates
-        [polygon1, polygon2, polygon3].forEach((polygon) => {
-          polygon.addListener('click', function (event) {
-            const clickedLatLng = event.latLng;
-
-            // Get the coordinates of the clicked location within the polygon
-            const lat = clickedLatLng.lat();
-            const lng = clickedLatLng.lng();
-
-            // Use Geocoder to get the address
-            geocoder.geocode(
-              { location: clickedLatLng },
-              function (results, status) {
-                if (status === google.maps.GeocoderStatus.OK) {
-                  if (results[0]) {
-                    const address = results[0].formatted_address;
-                    document.getElementById('info').innerHTML =
-                      '<b>Coordinates:</b><br>Lat: ' +
-                      lat +
-                      '<br>Lng: ' +
-                      lng +
-                      '<br><b>Address:</b><br>' +
-                      address;
-                  } else {
-                    alert('No address found for this location');
-                  }
-                } else {
-                  alert('Geocoder failed due to: ' + status);
-                }
-              }
-            );
-          });
         });
       }
 
