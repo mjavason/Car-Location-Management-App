@@ -18,23 +18,38 @@
         border: 1px solid #ccc;
         z-index: 5;
       }
+      #checkPositionButton {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 10;
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #checkPositionButton:hover {
+        background-color: #45a049;
+      }
     </style>
   </head>
   <body>
     <div id="info"></div>
     <div id="map"></div>
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+    <button id="checkPositionButton">Check My Location</button>
+    <script src="https://maps.googleapis.com/maps/api/js?key=test&libraries=places"></script>
     <script src="coordinates/data.js"></script>
     <script>
+      let marker = null;
+
       function initMap() {
         // Initialize the map
         const map = new google.maps.Map(document.getElementById('map'), {
           center: { lat: 6.4, lng: 7.5 }, // Approximate center
           zoom: 13,
         });
-
-        // Marker reference
-        let marker = null;
 
         // Create polygons
         const polygon1 = new google.maps.Polygon({
@@ -81,17 +96,58 @@
           restriction: {
             latLngBounds: bounds,
             strictBounds: false,
-            // gestureHandling: 'greedy',
           },
         });
 
         // Fit the map to the polygons' bounds
         map.fitBounds(bounds);
 
-        // Initialize the Geocoder
-        const geocoder = new google.maps.Geocoder();
+        // Function to check if the user's position is within bounds
+        function checkPosition(lat, lng) {
+          const position = new google.maps.LatLng(lat, lng);
+          const insidePolygon =
+            google.maps.geometry.poly.containsLocation(position, polygon1) ||
+            google.maps.geometry.poly.containsLocation(position, polygon2) ||
+            google.maps.geometry.poly.containsLocation(position, polygon3);
 
-        // Set up the click event listener on the map
+          if (insidePolygon) {
+            // Place marker if inside the bounds
+            if (marker) {
+              marker.setMap(null);
+            }
+            marker = new google.maps.Marker({
+              position: position,
+              map: map,
+              title: `Lat: ${lat}, Lng: ${lng}`,
+            });
+          } else {
+            window.alert('Your location is out of bounds.');
+          }
+        }
+
+        // Immediately ask for geolocation permission on site load
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+              checkPosition(lat, lng);
+              map.setCenter(new google.maps.LatLng(lat, lng)); // Center map to user position
+            },
+            function () {
+              alert('Geolocation failed or permission denied.');
+            },
+            {
+              enableHighAccuracy: true, // Request high accuracy for better GPS location
+              timeout: 5000, // Timeout if location can't be determined
+              maximumAge: 0, // Don't use cached location
+            }
+          );
+        } else {
+          alert('Geolocation is not supported by this browser.');
+        }
+
+        // Set up the click event listener on the map (regular map click)
         map.addListener('click', function (event) {
           const clickedLatLng = event.latLng;
 
@@ -118,7 +174,8 @@
             google.maps.geometry.poly.containsLocation(clickedLatLng, polygon3);
 
           if (insidePolygon) {
-            // Use Geocoder to get the address if inside a polygon
+            // Show address if inside polygon
+            const geocoder = new google.maps.Geocoder();
             geocoder.geocode(
               { location: clickedLatLng },
               function (results, status) {
@@ -143,17 +200,37 @@
               }
             );
           } else {
-            window.alert('Oga where you dey go? ');
-            // Handle clicks outside polygons
+            window.alert('Oga where you dey go?');
             document.getElementById('info').innerHTML =
-              'Selected location out of bounds<br>';
-            //  +
-            // '<b>Coordinates:</b><br>Lat: ' +
-            // clickedLatLng.lat() +
-            // '<br>Lng: ' +
-            // clickedLatLng.lng();
+              'Selected location is out of bounds.<br>';
           }
         });
+
+        // Add functionality for the "Check My Location" button
+        document
+          .getElementById('checkPositionButton')
+          .addEventListener('click', function () {
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                function (position) {
+                  const lat = position.coords.latitude;
+                  const lng = position.coords.longitude;
+                  checkPosition(lat, lng);
+                  map.setCenter(new google.maps.LatLng(lat, lng)); // Center map to user position
+                },
+                function () {
+                  alert('Geolocation failed or permission denied.');
+                },
+                {
+                  enableHighAccuracy: true,
+                  timeout: 5000,
+                  maximumAge: 0,
+                }
+              );
+            } else {
+              alert('Geolocation is not supported by this browser.');
+            }
+          });
       }
 
       // Initialize the map
